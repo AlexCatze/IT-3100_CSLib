@@ -148,20 +148,48 @@ namespace IT_3100_CsLib
         [DllImport(PRINTER_LIB)]
         public static extern PRNStatus PRNPrintWindow(IntPtr hWindow);
 
-        [DllImport(PRINTER_LIB)]
-        public static extern PRNStatus PRNTextOut(uint dwLength, string szTextData);
+        [DllImport(PRINTER_LIB, CharSet = CharSet.Auto)]
+        private static extern PRNStatus PRNTextOut(uint dwLength, string szTextData);
 
         public static PRNStatus PRNTextOut(string szTextData)
-        { return PRNTextOut(0, szTextData); }
+        {
+            string text = szTextData + '\n';
+            return PRNTextOut((uint)text.Length, text);
+        }
+
+        public static PRNStatus SkipLines(int lines)
+        {
+            for (int i = 0; i < lines; i++)
+            {
+                PRNStatus res = PRNTextOut("\n");
+                if (res != PRNStatus.PRN_NORMAL) return res;
+            }
+            return PRNStatus.PRN_NORMAL;
+        }
+
+        /*
+        public static PRNStatus PRNTextOut(string szTextData)
+        {
+            unsafe
+            {
+                fixed (char* charr = (szTextData + '\0').ToCharArray())
+                    return PRNTextOut(0, charr);
+            }
+        }*/
+
+        //public static PRNStatus PRNTextOut(string szTextData)
+        //{ return PRNTextOut(0, szTextData); }
 
         [DllImport(PRINTER_LIB)]
         public static extern PRNStatus PRNImageOut(uint dwWidth, uint dwHeight, uint dwFeedLength, byte[] pbyImageData);
 
-        [DllImport(PRINTER_LIB)]
-        public static extern PRNStatus PRNBarcodeOut(codeType dwCode, uint dwHeight, bool dwCheckDigit, fontType dwFont, uint dwLeftMargin, direction dwDirection, uint dwLength, string szBarcodeData);
-        
+        [DllImport(PRINTER_LIB,CharSet=CharSet.Unicode)]
+        private static extern PRNStatus PRNBarcodeOut(uint dwCode, uint dwHeight, bool dwCheckDigit, uint dwFont, uint dwLeftMargin, uint dwDirection, uint dwLength, string szBarcodeData);
+
         public static PRNStatus PRNBarcodeOut(codeType dwCode, uint dwHeight, bool dwCheckDigit, fontType dwFont, uint dwLeftMargin, direction dwDirection, string szBarcodeData)
-        { return PRNBarcodeOut(dwCode, dwHeight, dwCheckDigit, dwFont, dwLeftMargin, dwDirection, (uint)(szBarcodeData.Length + (dwCheckDigit ? 1 : 0)), szBarcodeData); }
+        {
+            return PRNBarcodeOut((uint)dwCode, dwHeight, dwCheckDigit, (uint)dwFont, dwLeftMargin, (uint)dwDirection, (uint)szBarcodeData.Length, szBarcodeData);
+        }
 
         [DllImport(PRINTER_LIB)]
         public static extern PRNStatus PRNBMPOut(string szFilename);

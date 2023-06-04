@@ -20,6 +20,7 @@ namespace IT_3100_CsLib
 
         public enum CMOSStatus : int
         {///NOT CONFIRMED
+            IMG_SUCCESS
         }
         /*
             IMG_SUCCESS : Normal termination
@@ -94,15 +95,31 @@ namespace IT_3100_CsLib
         //pMode - decodeMode
         [DllImport(CMOS_LIB)]
         public static extern Int32 IMGSetDecodeMode(Int32 dwMode, Int32 dwNum, string tcSeparator);
-        //dwMode - decodeMode
+ 
         [DllImport(CMOS_LIB)]
-        public static extern Int32 IMGWaitForDecode(Int32 dwTime, string pMessage, string pCodeID, string pAimID, string pSymModifier, ref Int32 pLength, IntPtr fpCallBack);
+        public static extern unsafe Int32 IMGWaitForDecode(Int32 dwTime, StringBuilder pMessage, StringBuilder pCodeID, StringBuilder pAimID, StringBuilder pSymModifier, Int32* pLength, IntPtr fpCallBack);
+
+        public static unsafe Int32 IMGWaitForDecode(Int32 dwTime, out string pMessage, out string pCodeID, out string pAimID, out string pSymModifier, out int pLength, IntPtr fpCallBack)
+        {
+            StringBuilder _pMessage = new StringBuilder(), _pCodeID = new StringBuilder(), _pAimID = new StringBuilder(), _pSymModifier = new StringBuilder();
+            Int32 res;
+            fixed (int* ptr = &pLength)
+                res = CMOSLib.IMGWaitForDecode(dwTime, _pMessage, _pCodeID, _pAimID, _pSymModifier, ptr, fpCallBack);
+            pMessage = _pMessage.ToString();
+            pCodeID = _pCodeID.ToString();
+            pAimID = _pAimID.ToString();
+            pSymModifier = _pSymModifier.ToString();
+            return res;
+        }
 
         [DllImport(CMOS_LIB)]
-        public static extern Int32 IMGWaitForDecodeRaw(Int32 dwTime, ref byte pMessage, string pCodeID, string pAimID, string pSymModifier, ref Int32 pLength, IntPtr fpCallBack);
+        public static extern Int32 IMGWaitForDecodeRaw(Int32 dwTime, ref byte pMessage, ref string pCodeID, ref string pAimID, ref string pSymModifier, ref Int32 pLength, IntPtr fpCallBack);
 
         [DllImport(CMOS_LIB)]
         public static extern Int32 IMGStopDecode();
+
+        [DllImport(CMOS_LIB)]
+        public static extern Int32 IMGSetCode128(bool bEnabled, Int32 dwMinLength, Int32 dwMaxLength);
 
         [DllImport(CMOS_LIB)]
         private unsafe static extern Int32 IMGGetImage(byte* pImageBuffer, ref Int32 pSize, Int32 nLeft, Int32 nTop, Int32 nRight, Int32 nBottom, Int32 dwSkip, Int32 dwFormat, Int32 dwWhiteValue);
